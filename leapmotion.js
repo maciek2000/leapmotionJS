@@ -1,8 +1,12 @@
 var Leap = require('leapjs');
+var WebSocketServer = require('ws').Server,
+	wss = new WebSocketServer({port: 8080});
 
 var controllerOptions = {enableGestures: true};
-
+var jsontosend;
 var info;
+
+
 
 Leap.loop(controllerOptions, function(frame) {
   // Body of callback function
@@ -45,10 +49,25 @@ Leap.loop(controllerOptions, function(frame) {
 
 		info = {frameid:frame.id,frametimestamp:frame.timestamp, Hands:frame.hands.length, Fingers:frame.fingers.length,hands:palmstosend};
 	}
-	var jsontosend = JSON.stringify(info);
+	jsontosend = JSON.stringify(info);
 	console.log(jsontosend + "\n");
 
-
-
-
 })
+
+var clients = [];
+wss.on('connection', function(ws) {
+	ws.send('start');
+	clients.push(ws);
+
+    ws.on('message', function(message) {
+    	if (message == "ok")
+    	{
+    		ws.send(jsontosend);	
+    	};
+        //console.log('received: %s', message);
+    });
+    
+});
+
+
+
